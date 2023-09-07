@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request
 import requests
 import socket
@@ -34,7 +36,10 @@ def welcome():
 @app.route('/ping', methods=["GET"])
 def ping():
     # 获取本地ip
-    return returner(200, "echo from", get_local_ip())
+    return returner(200, "response message", {
+        "ips": get_local_ip(),
+        "headers": str(request.headers)
+    })
 
 
 @app.route('/access_http', methods=["GET", "POST"])
