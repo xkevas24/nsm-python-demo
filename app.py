@@ -97,7 +97,7 @@ def access():
     return returner(200, "ok", response.text)
 
 
-@app.route('/get_version', methods=["GET"])
+@app.route('/detail/get_version', methods=["GET"])
 def get_version():
     # 获取本地ip
     color_mark = request.headers.get('X-Nsf-Mark')
@@ -110,14 +110,26 @@ def get_version():
     })
 
 
-@app.route('/get_product_detail', methods=["GET"])
+@app.route('/info/get_version', methods=["GET"])
+def get_version_info():
+    # 获取本地ip
+    # color_mark = request.headers.get('X-Nsf-Mark')
+    return returner(200, "ok", {
+        "version": "V1.0.0",
+        "notes": "提供产品的名称和价格",
+        "ips": get_local_ip(),
+        "headers": str(request.headers),
+        "color_mark": None
+    })
+
+@app.route('/detail/get_product_detail', methods=["GET"])
 def get_product_detail():
     # 获取本地ip
 
     return returner(200, "ok", [
         {
             "title": "财富管家-初级版",
-            "detail": "财富管家-中级版主要投向中高等级<span style='color: #1976D2'>中短期债券</span>，远离股市波动。所投债券资产久期较短且信用等级较高，相对能更好地控制风险，力争匹配投资者的<span style='color: #1976D2'>短期闲钱理财需求</span>。"     # "<span style='color: #FE0000'>这是一个bug，本来这里要显示文字的！</span>"
+            "detail": "财富管家-低级版主要投向低等级<span style='color: #1976D2'>短期债券</span>，远离股市波动。所投债券资产久期较短且信用等级较高，相对能更好地控制风险，力争匹配投资者的<span style='color: #1976D2'>短期闲钱理财需求</span>。"     # "<span style='color: #FE0000'>这是一个bug，本来这里要显示文字的！</span>"
         },
         {
             "title": "财富管家-中级版",
@@ -134,7 +146,7 @@ def get_product_detail():
     ])
 
 
-@app.route('/get_annual', methods=["GET"])
+@app.route('/detail/get_annual', methods=["GET"])
 def get_annual():
     product_name = request.args.get("product_name")
     annual = "0.00%"
@@ -148,6 +160,33 @@ def get_annual():
         annual = "5.06%"
     return annual
 
+
+@app.route('/info/get_product', methods=["GET"])
+def info_get_product():
+    return returner(200, "ok", [
+        {
+            "title": "财富管家-初级版",
+            "img": "https://img0.baidu.com/it/u=652700042,3999938957&fm=253&fmt=auto&app=138&f=PNG?w=750&h=500",
+            "basic": "3.33%",
+            "notice": "30天｜10元起购｜中低风险｜债券基金"
+        },
+        {
+            "title": "财富管家-中级版",
+            "img": "https://img0.baidu.com/it/u=537070019,4158887229&fm=253&fmt=auto&app=138&f=JPEG?w=657&h=370",
+            "basic": "3.60%",
+            "notice": "30天｜20元起购｜中低风险｜债券基金"
+         }, {
+            "title": "财富管家-高级版",
+            "img": "https://img1.baidu.com/it/u=4007786138,3371888956&fm=253&fmt=auto&app=138&f=JPEG?w=888&h=500",
+            "basic": "4.49",
+            "notice": "30天｜30元起购｜中低风险｜债券基金"
+        }, {
+            "title": "财富管家-终身版",
+            "img": "https://img0.baidu.com/it/u=2920245905,2739364058&fm=253&fmt=auto?w=640&h=392",
+            "basic": "5.06%",
+            "notice": "120天｜100元起购｜中低风险｜债券基金"
+        }
+    ])
 
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8081
