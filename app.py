@@ -1,10 +1,15 @@
 import json
+import argparse
 import sys
-from flask import Flask, request
+from urllib.parse import urlencode
+from flask import Flask, request, abort
 from flask_cors import CORS
 import requests
 import socket
 import netifaces
+import random
+import time
+
 app = Flask(__name__)
 
 
@@ -40,13 +45,20 @@ def get_local_ip():
 
 @app.route('/', methods=["GET"])
 def welcome():
-    return 'Welcome to use Netease Qingzhou Cloud Native Service!'
+    return 'Welcome to use Netease Qingzhou Cloud Native Service! - {}'.format(version)
+    # return 'Break', 299
+
+
+@app.route('/version', methods=["GET"])
+def return_version():
+    return returner(200, "ok", version)
 
 
 @app.route('/ping', methods=["GET"])
 def ping():
     # 获取本地ip
     return returner(200, "response message", {
+        "version": version,
         "ips": get_local_ip(),
         "headers": str(request.headers)
     })
@@ -78,7 +90,7 @@ def access():
     if "api" in request.args:
         api = request.args.get("api")
     else:
-        return returner(403, "failed", "[api] like /health is required")
+        api = "/"
 
     url = "http://{}:{}{}".format(service_name, service_port, api)
     print(url)
@@ -94,19 +106,19 @@ def access():
             response = requests.get(url)
         except Exception as e:
             return returner(501, "Exception", str(e))
-    return returner(200, "ok", response.text)
+    return returner(response.status_code, "ok", response.text)
 
 
 @app.route('/detail/get_version', methods=["GET"])
 def get_version():
     # 获取本地ip
-    color_mark = request.headers.get('X-Nsf-Mark')
+    # color_mark = request.headers.get('X-Nsf-Mark')
     return returner(200, "ok", {
-        "version": "V1.0.0",
+        "version": version,
         "notes": "提供产品的详细介绍信息，为product-info提供年化利率的数据（非核心）",
         "ips": get_local_ip(),
         "headers": str(request.headers),
-        "color_mark": color_mark
+        "color_mark": color_instance
     })
 
 
@@ -115,12 +127,13 @@ def get_version_info():
     # 获取本地ip
     # color_mark = request.headers.get('X-Nsf-Mark')
     return returner(200, "ok", {
-        "version": "V1.0.0",
+        "version": version,
         "notes": "提供产品的名称和价格",
         "ips": get_local_ip(),
         "headers": str(request.headers),
-        "color_mark": None
+        "color_mark": color_instance
     })
+
 
 @app.route('/detail/get_product_detail', methods=["GET"])
 def get_product_detail():
@@ -129,7 +142,8 @@ def get_product_detail():
     return returner(200, "ok", [
         {
             "title": "财富管家-初级版",
-            "detail": "财富管家-低级版主要投向低等级<span style='color: #1976D2'>短期债券</span>，远离股市波动。所投债券资产久期较短且信用等级较高，相对能更好地控制风险，力争匹配投资者的<span style='color: #1976D2'>短期闲钱理财需求</span>。"     # "<span style='color: #FE0000'>这是一个bug，本来这里要显示文字的！</span>"
+            "detail": "财富管家-低级版主要投向低等级<span style='color: #1976D2'>短期债券</span>，远离股市波动。所投债券资产久期较短且信用等级较高，相对能更好地控制风险，力争匹配投资者的<span style='color: #1976D2'>短期闲钱理财需求</span>。"
+            # "<span style='color: #FE0000'>这是一个bug，本来这里要显示文字的！</span>"
         },
         {
             "title": "财富管家-中级版",
@@ -166,30 +180,126 @@ def info_get_product():
     return returner(200, "ok", [
         {
             "title": "财富管家-初级版",
-            "img": "https://img0.baidu.com/it/u=652700042,3999938957&fm=253&fmt=auto&app=138&f=PNG?w=750&h=500",
+            "img": "lv1.webp",
             "basic": "3.33%",
             "notice": "30天｜10元起购｜中低风险｜债券基金"
         },
         {
             "title": "财富管家-中级版",
-            "img": "https://img0.baidu.com/it/u=537070019,4158887229&fm=253&fmt=auto&app=138&f=JPEG?w=657&h=370",
+            "img": "lv2.webp",
             "basic": "3.60%",
             "notice": "30天｜20元起购｜中低风险｜债券基金"
-         }, {
+        }, {
             "title": "财富管家-高级版",
-            "img": "https://img1.baidu.com/it/u=4007786138,3371888956&fm=253&fmt=auto&app=138&f=JPEG?w=888&h=500",
+            "img": "lv3.webp",
             "basic": "4.49",
             "notice": "30天｜30元起购｜中低风险｜债券基金"
         }, {
             "title": "财富管家-终身版",
-            "img": "https://img0.baidu.com/it/u=2920245905,2739364058&fm=253&fmt=auto?w=640&h=392",
+            "img": "lv4.webp",
             "basic": "5.06%",
             "notice": "120天｜100元起购｜中低风险｜债券基金"
         }
     ])
 
+
+@app.route('/unstable', methods=["GET"])
+def unstable():
+    # 这个接口需要有一定的概率返回500
+
+    if "code" in request.args:
+        code = int(request.args.get("code"))
+    else:
+        code = 500
+
+    if "chance" in request.args:
+        chance = float(request.args.get("chance"))
+    else:
+        chance = 0.5
+
+    if chance == 1:
+        return 'Error!', code
+    if random.random() < chance:
+        # abort(500)
+        return 'Error!', code
+    else:
+        return 'Work!'
+
+
+def simulate_cpu_usage():
+    while True:
+        pass
+
+
+@app.route('/cpu_max', methods=["GET"])
+def cpu_max():
+    simulate_cpu_usage()
+    return 'Reach!'
+
+
+@app.route('/delay_return', methods=["GET"])
+def delay_return():
+    if "seconds" in request.args:
+        seconds = int(request.args.get("seconds"))
+    else:
+        seconds = 2
+    time.sleep(seconds)  # 2秒延迟
+    return "Delayed response after {} seconds".format(seconds)
+
+
+def api(entry, params, color_mark):
+    try:
+        print("http://{}?{}".format(entry, params))
+        print("color_mark:".format(color_mark))
+        if color_mark is not None:
+            headers = {"X-Nsf-Mark": color_mark}
+            response = requests.get("http://{}?{}".format(entry, params), headers=headers)
+        else:
+            response = requests.get("http://{}?{}".format(entry, params))
+    except Exception as e:
+        return returner(501, "Exception", str(e))
+    return response.content
+
+
+@app.route('/api', methods=["GET"])
+def api_redirect():
+    if "entry" in request.args:
+        entry = request.args.get("entry")
+    else:
+        return returner(403, "failed", "[entry] is required")
+
+    if "color_mark" in request.args:
+        color_mark = request.args.get("color_mark")
+    else:
+        color_mark = None
+    # color_mark = request.headers.get('X-Nsf-Mark')
+    print(request.headers)
+    # print(color_mark)
+    return api(entry, urlencode(request.args), color_mark)
+
+
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8081
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-port', '--port', help='设置demo启动端口，默认为8081')
+    parser.add_argument('-version', '--version', help='设置DEMO显示的版本名称，默认为V1.0.0')
+    parser.add_argument('-color', '--color', help='设置实例的染色标识，默认为五色')
+    args = parser.parse_args()
+    if args.port is None:
+        port = 8081
+    else:
+        port = int(args.port)
+    print("DEMO PORT: {}".format(port))
+
+    if args.version is None:
+        version = "V1.0.0"
+    else:
+        version = args.version
+    print("DEMO VERSION: {}".format(version))
+
+    if args.color is None:
+        color_instance = None
+    else:
+        color_instance = args.color
+    print("DEMO COLOR: {}".format(color_instance))
+
     app.run(host='0.0.0.0', port=port)
-
-

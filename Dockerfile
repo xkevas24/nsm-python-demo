@@ -10,11 +10,9 @@ COPY . /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "app.py", "8080"]
+CMD python app.py -port=8080 ${DEMO_VERSION:+-version=$DEMO_VERSION} ${DEMO_COLOR:+-color=$DEMO_COLOR}
 
 
-# docker build -t harbor.cloud.netease.com/qztest/nsf-python-demo:v2.6.0 .
-# docker push harbor.cloud.netease.com/qztest/nsf-python-demo:v2.6.0
+# docker build -t harbor.cloud.netease.com/qztest/nsm-python-demo:v4.2.1 .
+# docker push harbor.cloud.netease.com/qztest/nsm-python-demo:v4.2.1
 
-# docker build -t harbor.cloud.netease.com/qztest/nsf-python-demo:v2.5.0_blue .
-# docker push harbor.cloud.netease.com/qztest/nsf-python-demo:v2.5.0_blue
